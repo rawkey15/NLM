@@ -13,7 +13,7 @@
             if(e.which === 13){
                 var msg = $(e.currentTarget).val();
                 $scope.messages.push({
-                    Name: 'Tester',
+                    Name: 'You',
                     Message: msg
                 });
                 $(e.currentTarget).val('');
@@ -24,7 +24,7 @@
                         
                         $scope.$apply(function () {
                             $scope.messages.push({
-                                Name: 'Network',
+                                Name: 'Sonny',
                                 Message: response.msg,
                                 Confirm: response.confirm
                             });
@@ -34,7 +34,7 @@
 
                         $('.cnf').on('click', function(e){
                             
-                            var cnf = $(e.currentTarget).data('value');
+                            var cnf = $(e.currentTarget).data('value');                            
                             $.ajax({
                                 url: 'http://localhost:5000/confirm/'+cnf,
                                 type: 'GET',
@@ -54,14 +54,20 @@
                         });
                         
                         $('.getit').on('click', function(e){
-                            
-                            var getit = $(e.currentTarget).data('value');
-                            var searchterm = $(e.currentTarget).data('search');
+                            var target =  $(e.currentTarget);
+                            var getit = target.data('value');
+                            var searchterm = target.data('search');
+                            if(getit === "yes"){
+                                target.parent().append('<div class="search-loader"></div>');
+                            }
                             $.ajax({
                                 url: 'http://localhost:5000/getit/'+getit+'/'+searchterm,
                                 type: 'GET',
                                 success: function(response, status, xhr){
                                     $('.btn').attr("disabled", true);
+                                    if(target.parent().find('.search-loader').length > 0){
+                                        target.parent().find('.search-loader').remove();
+                                    }
                                     $scope.$apply(function () {
                                         $scope.messages.push({
                                             Name: 'Network',

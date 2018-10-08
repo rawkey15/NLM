@@ -208,3 +208,11 @@ body {
 :-ms-input-placeholder {
     color: rgba(255, 255, 255, 0.9);
 }
+
+.search-loader{
+    background-image: url(../loader.gif);
+    width: 86px;
+    height: 56px;
+    background-position-y: -106px;
+    background-size: 100%;
+}

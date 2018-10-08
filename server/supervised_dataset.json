@@ -4,22 +4,6 @@
         "output": "Hi there <br/> How can i help you today?"
     },
     {
-        "input": "hello",
-        "output": "Hello there <br/> How can i help you today?"
-    },
-    {
-        "input": "hey",
-        "output": "Hey there <br/> How can i help you today?"
-    },
-    {
-        "input": "first degree",
-        "output": "first degree murder"
-    },
-    {
-        "input": "second degree",
-        "output": "second degree murder"
-    },
-    {
         "input": "first",
         "output": "first degree murder"
     },
@@ -28,9 +12,11 @@
         "output": "second degree murder"
     },
     {
-        "input": [
-            ""
-        ],
+        "input": "",
         "output": "Sorry i don't have information on that."
+    },
+    {
+        "input": "third",
+        "output": "third degree"
     }
 ]

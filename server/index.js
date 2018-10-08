@@ -32,9 +32,9 @@ app.get('/', function (req, res) {
 /** Make api call here to fetch new result to train */
 
 let getdata = function (key, term) {
-   let newTrainDataset = require('./new_datasetlinks.json'); 
+  let newTrainDataset = require('./new_datasetlinks.json');
 
-   return newTrainDataset;
+  return newTrainDataset;
 }
 
 /**Brainjs ML configuration  and request handler*/
@@ -66,6 +66,40 @@ let startTraining = function (dataSet) {
 let tempResponse = "";
 let tempSearch = "";
 
+let findDuplicates = (arr) => arr.filter((item, index) => arr && arr.indexOf(item) != index);
+
+let getLinks = function (trainedData) {
+  if (trainedData && trainedData.indexOf('murder') >= 0) {
+    let sampleLinks = require("./samplelinks.json");
+    console.log('murder found');
+    if (trainedData.indexOf('first') >= 0) {
+      console.log('murder first');
+      var links = sampleLinks['first']['links'];
+      console.log(links);
+      trainedData = links[0] + links[1] + links[2];
+      tempResponse = links[3] + links[4] + links[5];
+
+    }
+
+    if (trainedData.indexOf('second') >= 0) {
+      console.log('murder second');
+      var links = sampleLinks['second']['links'];
+      console.log(links);
+      trainedData = links[0] + links[1] + links[2];
+      tempResponse = links[3] + links[4] + links[5];
+    }
+
+    if (trainedData.indexOf('third') >= 0) {
+      console.log('murder third');
+      var links = sampleLinks['third']['links'];
+      console.log(links);
+      trainedData = links[0] + links[1] + links[2];
+      tempResponse = links[3] + links[4] + links[5];
+    }
+    return trainedData;
+  }
+}
+
 app.get('/input/:data', function (req, res) {
   let input = req.params.data;
   console.log('Request URL:', req.originalUrl)
@@ -77,18 +111,48 @@ app.get('/input/:data', function (req, res) {
     console.log("input:" + splitInput.length);
     if (splitInput.length > 1) {
       let possibilites = [];
+      let fullMatch = false;
+      let maxMatch = [];
 
       splitInput.forEach(function (element) {
-        possibilites.push(net.run(element));
+        let run = net.run(element);
+        let splitRun = run.split(" ");
+
+        splitRun.forEach(function (ele) {
+          console.log("Split run:" + ele + " run:" + run + " input:" + input);
+          if (run.indexOf(ele) >= 0 && input.indexOf(ele)) {
+            maxMatch.push(run);
+          }
+        });
+        console.log("Input:" + input + " run:" + run +" element:"+ element);
+
+        if (run && run.indexOf(element) >= 0) {
+          possibilites.push(run);
+        }
+
       }, this);
       console.log(possibilites);
-      possibilites.forEach(function (e) {
-        if (input.indexOf(e) > 0) {
-          trainedData = e;
-          return;
+      console.log("Max Match:" + JSON.stringify(maxMatch));
+      if (possibilites.length > 0) {
+        possibilites.forEach(function (e) {
+          if (input.indexOf(e) > 0) {
+            trainedData = e;
+          }
+          if (e === input) {
+            fullMatch = true;
+          }
+        });
+
+        let maxPossible = maxMatch && maxMatch.length > 0 ? findDuplicates(maxMatch)[0] : false;
+        console.log("max Possible:" + maxPossible);
+        if (maxPossible) {
+          trainedData = maxPossible;
         }
-      });
-      if (trainedData.indexOf('murder') >= 0) {
+
+        if (fullMatch && !maxPossible) {
+          trainedData = input;
+        }
+        /* if (trainedData.indexOf('murder') >= 0) {
         let sampleLinks = require("./samplelinks.json");
         console.log('murder found');
         if (trainedData.indexOf('first') >= 0) {
@@ -116,27 +180,47 @@ app.get('/input/:data', function (req, res) {
           tempResponse = links[3] + links[4] + links[5];
         }
 
-      }
-      if (trainedData) {
-        trainedData = {
-          msg: trainedData,
-          confirm: '<div><p>Does this suffice?</p><div><button data-value="yes" type="button" class="cnf btn btn-success">Yes</button><button data-value="no" type="button" class="cnf btn btn-danger">No</button><div></div>'
+      } */
+        let links = getLinks(trainedData);
+
+        if (trainedData && links) {
+          trainedData = {
+            msg: links,
+            confirm: '<div><p>Does this suffice?</p><div><button data-value="yes" type="button" class="cnf btn btn-success">Yes</button><button data-value="no" type="button" class="cnf btn btn-danger">No</button><div></div>'
+          }
+        } else {
+          trainedData = {
+            msg: trainedData,
+            confirm: '<div><p>Does this suffice?</p><div><button data-value="yes" type="button" class="cnf btn btn-success">Yes</button><button data-value="no" type="button" class="cnf btn btn-danger">No</button><div></div>'
+          }
         }
+
+
+      } else {
+        trainedData = "";
       }
 
     } else {
       trainedData = net.run(input);
-      trainedData = {
-        msg: trainedData,
-        confirm: false
+      let links = getLinks(trainedData);
+      if (links) {
+        trainedData = {
+          msg: links,
+          confirm: '<div><p>Does this suffice?</p><div><button data-value="yes" type="button" class="cnf btn btn-success">Yes</button><button data-value="no" type="button" class="cnf btn btn-danger">No</button><div></div>'
+        }
+      } else {
+        trainedData = {
+          msg: trainedData,
+          confirm: false
+        }
       }
     }
     //let trainedData = net.run(input);
-    console.log("Data:" + trainedData);
+    console.log("Data:" + JSON.stringify(trainedData));
     let getDataElem = '<div><p>I can get the information in sometime. Do you want me to get it?</p><div><button data-value="yes" data-search="' + tempSearch + '" type="button" class="getit btn btn-success">Yes</button><button data-value="no" type="button" class="getit btn btn-danger">No</button><div></div>';
     res.send(trainedData ? trainedData : { msg: "Sorry i don't have information on that.", confirm: getDataElem });
   } else {
-    res.send('ready to get input');
+    res.send({ msg: 'ready to get input', confirm: false });
   }
 
 });
@@ -165,51 +249,55 @@ app.get('/getit/:data/:search', function (req, res) {
       let splitSearch = term.split(' ');
       console.log(splitSearch);
       let newTrainingLinks = getdata(splitSearch[0], term);
-      let trainedData = newTrainingLinks[0] + newTrainingLinks[1] + newTrainingLinks[2];
-      tempResponse = newTrainingLinks[3] + newTrainingLinks[4] + newTrainingLinks[5];
+      let trainedData = newTrainingLinks['links'][0] + newTrainingLinks['links'][1] + newTrainingLinks['links'][2];
+      tempResponse = newTrainingLinks['links'][3] + newTrainingLinks['links'][4] + newTrainingLinks['links'][5];
       if (trainedData) {
         trainedData = {
           msg: trainedData,
           confirm: '<div><p>Does this suffice?</p><div><button data-value="yes" type="button" class="cnf btn btn-success">Yes</button><button data-value="no" type="button" class="cnf btn btn-danger">No</button><div></div>'
         }
       }
-      res.send(newTrainingLinks);
-      
+     // res.send(trainedData);
+
       let sampleLinksAppend = require("./samplelinks.json");
       sampleLinksAppend[splitSearch[0]] = {
         links: newTrainingLinks['links']
-      };      
-      
+      };
+
       supervisedData.push({
-          "input": splitSearch[0],
-          "output": splitSearch[0]+" degree murder"
+        "input": splitSearch[0],
+        "output": term
       });
 
       startTraining(supervisedData);
-      
-     const supervisedfile = './supervised_dataset.json';
-      
-     jsonfile.writeFile(supervisedfile, supervisedData)
-       .then(res => {
-         console.log('Write complete')
-       })
-       .catch(error => console.error(error));
 
-       const sampleLinksFile = './samplelinks.json';
-       
+      const supervisedfile = './supervised_dataset.json';
 
-       jsonfile.writeFile(sampleLinksFile, sampleLinksAppend)
-       .then(res => {
-         console.log('Write complete')
-       })
-       .catch(error => console.error(error));
+      jsonfile.writeFile(supervisedfile, supervisedData)
+        .then(res => {
+          console.log('Write complete')
+        })
+        .catch(error => console.error(error));
+
+      const sampleLinksFile = './samplelinks.json';
+      
+      let sendResponse = function(){
+        res.send(trainedData);
+      }
+
+      jsonfile.writeFile(sampleLinksFile, sampleLinksAppend)
+        .then(res => {
+          console.log('Write complete');
+          sendResponse();
+        })
+        .catch(error => console.error(error));
 
       //console.log(newTrainingList);*/
-      
+
     }
 
   } else {
-    res.send('Sorry i could not help you this time.');
+    res.send({ msg: 'Sorry i could not help you this time.', confirm: false });
   }
 
 });
